@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id
+  username   String
+  globalName String?
+  avatar     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  panels     Panel[]
+  auditLogs  AuditLog[]
+}
+
+model Guild {
+  id        String   @id
+  name      String
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  panels    Panel[]
+  settings  GuildSettings?
+}
+
+model GuildSettings {
+  guildId      String @id
+  guild        Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  logChannelId String?
+  defaultStyle String @default("PREMIUM")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Panel {
+  id              String      @id @default(cuid())
+  guildId         String
+  guild           Guild       @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  createdById     String
+  createdBy       User        @relation(fields: [createdById], references: [id])
+  channelId       String?
+  messageId       String?
+  name            String
+  title           String
+  accentText      String?
+  description     String?
+  type            PanelType   @default(SELF_ROLE)
+  mode            PanelMode   @default(BUTTONS)
+  style           PanelStyle  @default(PREMIUM)
+  color           String      @default("#5865F2")
+  imageUrl        String?
+  thumbnailUrl    String?
+  maxRoles        Int         @default(0)
+  requireRoleId   String?
+  status          PanelStatus @default(DRAFT)
+  lastPublishedAt DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  roles           PanelRole[]
+  logs            RoleLog[]
+  auditLogs       AuditLog[]
+}
+
+model PanelRole {
+  id          String      @id @default(cuid())
+  panelId     String
+  panel       Panel       @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  roleId      String
+  emoji       String?
+  label       String
+  description String?
+  buttonStyle ButtonStyle @default(SECONDARY)
+  position    Int
+
+  @@unique([panelId, roleId])
+}
+
+model RoleLog {
+  id        String     @id @default(cuid())
+  guildId   String
+  userId    String
+  roleId    String
+  action    RoleAction
+  panelId   String?
+  panel     Panel?     @relation(fields: [panelId], references: [id], onDelete: SetNull)
+  createdAt DateTime   @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  panelId   String?
+  panel     Panel?   @relation(fields: [panelId], references: [id], onDelete: SetNull)
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+enum PanelType {
+  SELF_ROLE
+  RULES
+  ANNOUNCEMENT
+}
+
+enum PanelMode {
+  BUTTONS
+  MENU
+}
+
+enum PanelStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PanelStyle {
+  PREMIUM
+  MINIMAL
+  COLORFUL
+  NEON
+}
+
+enum ButtonStyle {
+  PRIMARY
+  SECONDARY
+  SUCCESS
+  DANGER
+}
+
+enum RoleAction {
+  ADD
+  REMOVE
+}

@@ -1,0 +1,25 @@
+services:
+  nio-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nio-server
+    network_mode: "host"
+    ports:
+      - "${PORT:-3002}:${PORT:-3002}"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+      - BUN_CONFIG_NO_IPV6=1
+      - FRONTEND_URL=https://nio-client.vercel.app
+      - BACKEND_URL=https://nio.wign.dev
+      - DISCORD_REDIRECT_URI=https://nio-client.vercel.app/api/auth/discord/callback
+
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+    restart: unless-stopped
+
