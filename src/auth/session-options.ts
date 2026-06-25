@@ -12,6 +12,7 @@ export function createSessionOptions(nodeEnv = process.env.NODE_ENV, secret = pr
       httpOnly: true,
       sameSite: 'lax',
       secure: isProd,
+      domain: isProd ? '.wign.dev' : undefined,
     },
   };
 }
