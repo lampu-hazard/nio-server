@@ -25,6 +25,7 @@ export class R2Service {
         accessKeyId: this.config.getOrThrow('R2_ACCESS_KEY_ID'),
         secretAccessKey: this.config.getOrThrow('R2_SECRET_ACCESS_KEY'),
       },
+      requestChecksumCalculation: 'WHEN_REQUIRED',
     });
   }
 
@@ -37,7 +38,6 @@ export class R2Service {
       Bucket: this.bucket,
       Key: key,
       ContentType: contentType,
-      ContentLength: maxSizeBytes,
     });
     return getSignedUrl(this.client, command, { expiresIn: 900 });
   }
