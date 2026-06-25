@@ -8,7 +8,7 @@ export function createSessionOptions(nodeEnv = process.env.NODE_ENV, secret = pr
   return {
     secret,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     proxy: isProd,
     store: new PrismaSessionStore(
       new PrismaClient(),
