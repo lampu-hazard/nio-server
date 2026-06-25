@@ -10,6 +10,11 @@ import { UpdatePanelDto } from './dto/update-panel.dto';
 import { CreatePanelRoleDto } from './dto/create-panel-role.dto';
 import { UpdatePanelRoleDto } from './dto/update-panel-role.dto';
 import { ReorderPanelRolesDto } from './dto/reorder-panel-roles.dto';
+import { UploadUrlDto } from './dto/upload-url.dto';
+import { R2Service } from '../r2/r2.service';
+import { randomUUID } from 'crypto';
+
+const MAX_PANEL_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
 @UseGuards(SessionAuthGuard, GuildAccessGuard)
 @Controller('guilds/:guildId')
@@ -17,7 +22,16 @@ export class PanelsController {
   constructor(
     private readonly panels: PanelsService,
     private readonly publisher: DiscordPublisherService,
+    private readonly r2: R2Service,
   ) {}
+
+  @Post('panels/upload-url')
+  async uploadUrl(@Param('guildId') guildId: string, @Body() dto: UploadUrlDto) {
+    const ext = dto.fileName.split('.').pop() || 'png';
+    const key = `panels/${guildId}/${randomUUID()}.${ext}`;
+    const uploadUrl = await this.r2.getPresignedUploadUrl(key, dto.contentType, MAX_PANEL_IMAGE_SIZE);
+    return { ok: true, uploadUrl, key, url: this.r2.getPublicUrl(key) };
+  }
 
   @Get('panels')
   async list(@Param('guildId') guildId: string) {
