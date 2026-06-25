@@ -1,18 +1,25 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Client, Events, GatewayIntentBits, Partials, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { Client, EmbedBuilder, Events, GatewayIntentBits, Partials, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { AppLogger } from '../logger/logger.service';
 import { DiscordInteractionService } from './discord-interaction.service';
+import { StickersService } from '../stickers/stickers.service';
 
 @Injectable()
 export class DiscordBotService implements OnModuleInit {
   readonly client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
     partials: [Partials.GuildMember],
     allowedMentions: { parse: [], users: [], roles: [], repliedUser: false },
   });
 
   constructor(
     private readonly interactions: DiscordInteractionService,
+    private readonly stickers: StickersService,
     private readonly logger: AppLogger,
   ) {}
 
@@ -28,6 +35,18 @@ export class DiscordBotService implements OnModuleInit {
     this.client.on('interactionCreate', (interaction) => this.interactions.handle(interaction).catch(
       (err) => this.logger.error(`Interaction error: ${err?.message ?? err}`, err?.stack, 'DiscordBot'),
     ));
+
+    this.client.on('messageCreate', (message) => {
+      if (message.author.bot || !message.guild) return;
+      const name = message.content.trim().toLowerCase();
+      if (!name || name.length > 32) return;
+      const url = this.stickers.getCachedUrl(message.guild.id, name);
+      if (!url) return;
+      const embed = new EmbedBuilder().setImage(url);
+      message.channel.send({ embeds: [embed] }).catch(
+        (err) => this.logger.error(`Sticker send error: ${err?.message ?? err}`, err?.stack, 'DiscordBot'),
+      );
+    });
 
     const commands = [
       new SlashCommandBuilder().setName('dashboard').setDescription('Open the nio dashboard').toJSON(),

@@ -15,6 +15,8 @@
     "start:prod": "bun ./dist/main.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1075.0",
+    "@aws-sdk/s3-request-presigner": "^3.1075.0",
     "@nestjs/common": "latest",
     "@nestjs/config": "latest",
     "@nestjs/core": "latest",
@@ -26,10 +28,10 @@
     "cookie-parser": "latest",
     "discord.js": "^14.26.4",
     "express-session": "latest",
+    "nest-winston": "latest",
     "reflect-metadata": "latest",
     "rxjs": "latest",
-    "winston": "latest",
-    "nest-winston": "latest"
+    "winston": "latest"
   },
   "devDependencies": {
     "@nestjs/cli": "latest",

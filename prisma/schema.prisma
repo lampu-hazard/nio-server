@@ -26,15 +26,17 @@ model Guild {
   updatedAt DateTime @updatedAt
   panels    Panel[]
   settings  GuildSettings?
+  stickers  Sticker[]
 }
 
 model GuildSettings {
-  guildId      String @id
-  guild        Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  logChannelId String?
-  defaultStyle String @default("PREMIUM")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  guildId        String   @id
+  guild          Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  logChannelId   String?
+  defaultStyle   String   @default("PREMIUM")
+  stickerEnabled Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Panel {
@@ -101,6 +103,18 @@ model AuditLog {
   action    String
   metadata  Json?
   createdAt DateTime @default(now())
+}
+
+model Sticker {
+  id        String   @id @default(cuid())
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name      String
+  url       String
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, name])
 }
 
 enum PanelType {
