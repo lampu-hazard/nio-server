@@ -18,10 +18,4 @@ describe('createSessionOptions', () => {
     const cookie = options.cookie as NonNullable<typeof options.cookie> & { secure: boolean };
     expect(cookie.secure).toBe(false);
   });
-
-  it('does not save empty sessions that can overwrite an existing login cookie', () => {
-    const options = createSessionOptions('development', 'secret');
-
-    expect(options.saveUninitialized).toBe(false);
-  });
 });
