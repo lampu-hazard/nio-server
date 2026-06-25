@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            cd ${{ secrets.VPS_PROJECT_PATH || '~/nio/nio-server' }}
+            cd ${{ secrets.VPS_PROJECT_PATH || './nio-server' }}
             git pull origin main
             docker compose up -d --build --force-recreate
             docker image prune -f
