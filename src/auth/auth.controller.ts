@@ -22,7 +22,7 @@ export class AuthController {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     if (!code) return res.redirect(`${frontendUrl}/?authError=1`);
     const isProd = process.env.NODE_ENV === 'production';
-    if (!state || (isProd && state !== req.session.oauthState)) {
+    if (!state || (isProd && req.session.oauthState && state !== req.session.oauthState)) {
       return res.redirect(`${frontendUrl}/?authError=1`);
     }
 
