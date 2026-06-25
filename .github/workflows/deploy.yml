@@ -1,0 +1,63 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd ${{ secrets.VPS_PROJECT_PATH || '~/nio/nio-server' }}
+            git pull origin main
+            docker compose up -d --build --force-recreate
+            docker image prune -f
+
+      - name: Discord notification (success)
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"✅ Deploy Berhasil\",
+                \"description\": \"**nio-server** berhasil di-deploy ke VPS.\",
+                \"color\": 5763719,
+                \"fields\": [
+                  { \"name\": \"Branch\", \"value\": \"\`${{ github.ref_name }}\`\", \"inline\": true },
+                  { \"name\": \"Commit\", \"value\": \"[\`${GITHUB_SHA::7}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\", \"inline\": true },
+                  { \"name\": \"By\", \"value\": \"${{ github.actor }}\", \"inline\": true }
+                ],
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+              }]
+            }" "$DISCORD_WEBHOOK"
+
+      - name: Discord notification (failed)
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"❌ Deploy Gagal\",
+                \"description\": \"**nio-server** gagal di-deploy. [Lihat logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                \"color\": 15548997,
+                \"fields\": [
+                  { \"name\": \"Branch\", \"value\": \"\`${{ github.ref_name }}\`\", \"inline\": true },
+                  { \"name\": \"Commit\", \"value\": \"[\`${GITHUB_SHA::7}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\", \"inline\": true },
+                  { \"name\": \"By\", \"value\": \"${{ github.actor }}\", \"inline\": true }
+                ],
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+              }]
+            }" "$DISCORD_WEBHOOK"
