@@ -23,6 +23,7 @@
     "@nestjs/mapped-types": "latest",
     "@nestjs/platform-express": "latest",
     "@prisma/client": "^6.19.0",
+    "@quixo3/prisma-session-store": "^3.1.21",
     "class-transformer": "latest",
     "class-validator": "latest",
     "cookie-parser": "latest",
