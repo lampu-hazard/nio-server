@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PermissionsBitField } from 'discord.js';
 import { DiscordBotService } from '../discord/discord-bot.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { StickersService } from '../stickers/stickers.service';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 const MANAGE_GUILD = 0x20n;
 const MANAGE_ROLES = 0x10000000n;
@@ -12,6 +14,8 @@ export class GuildsService {
   constructor(
     private readonly bot: DiscordBotService,
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => StickersService))
+    private readonly stickers: StickersService,
   ) {}
 
   canManage(userGuild: any): boolean {
@@ -78,5 +82,36 @@ export class GuildsService {
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
+  }
+
+  async getSettings(guildId: string) {
+    const settings = await this.prisma.guildSettings.findUnique({
+      where: { guildId },
+    });
+    return {
+      logChannelId: settings?.logChannelId || null,
+      stickerEnabled: settings?.stickerEnabled || false,
+    };
+  }
+
+  async updateSettings(guildId: string, dto: UpdateSettingsDto) {
+    const updated = await this.prisma.guildSettings.upsert({
+      where: { guildId },
+      update: {
+        logChannelId: dto.logChannelId !== undefined ? dto.logChannelId : undefined,
+        stickerEnabled: dto.stickerEnabled !== undefined ? dto.stickerEnabled : undefined,
+      },
+      create: {
+        guildId,
+        logChannelId: dto.logChannelId || null,
+        stickerEnabled: dto.stickerEnabled || false,
+      },
+    });
+
+    if (dto.stickerEnabled !== undefined) {
+      await this.stickers.setEnabled(guildId, dto.stickerEnabled);
+    }
+
+    return updated;
   }
 }

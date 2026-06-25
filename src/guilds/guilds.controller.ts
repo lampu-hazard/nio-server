@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 import { GuildAccessGuard } from './guards/guild-access.guard';
 import { GuildsService } from './guilds.service';
+import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 @UseGuards(SessionAuthGuard)
 @Controller('guilds')
@@ -28,5 +29,17 @@ export class GuildsController {
   @Get(':guildId/audit-logs')
   async auditLogs(@Param('guildId') guildId: string) {
     return { ok: true, auditLogs: await this.guilds.getAuditLogs(guildId) };
+  }
+
+  @UseGuards(GuildAccessGuard)
+  @Get(':guildId/settings')
+  async getSettings(@Param('guildId') guildId: string) {
+    return { ok: true, settings: await this.guilds.getSettings(guildId) };
+  }
+
+  @UseGuards(GuildAccessGuard)
+  @Patch(':guildId/settings')
+  async updateSettings(@Param('guildId') guildId: string, @Body() dto: UpdateSettingsDto) {
+    return { ok: true, settings: await this.guilds.updateSettings(guildId, dto) };
   }
 }
