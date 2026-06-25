@@ -45,6 +45,12 @@ export class AuthController {
       req.session.oauthState = undefined;
       await this.saveSession(req);
 
+      // Diagnostic log before redirect
+      console.log('[DEBUG CALLBACK REDIRECT]', {
+        setCookieHeader: res.getHeader('Set-Cookie'),
+        sessionID: req.sessionID,
+      });
+
       return res.redirect(`${frontendUrl}/dashboard`);
     } catch (error) {
       console.error('[OAuth callback error]', error);
