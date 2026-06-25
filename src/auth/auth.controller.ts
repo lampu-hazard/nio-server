@@ -11,18 +11,41 @@ export class AuthController {
 
   @Get('discord')
   async login(@Req() req: Request, @Res() res: Response) {
+    console.log('[DEBUG LOGIN START]', {
+      incomingCookies: req.cookies,
+      hasSession: !!req.session,
+      sessionID: req.sessionID,
+    });
     const state = randomBytes(24).toString('hex');
     req.session.oauthState = state;
     await this.saveSession(req);
+
+    // Diagnostic log in login
+    console.log('[DEBUG LOGIN REDIRECT]', {
+      setCookieHeader: res.getHeader('Set-Cookie'),
+      sessionID: req.sessionID,
+    });
+
     return res.redirect(this.authService.getDiscordLoginUrl(state));
   }
 
   @Get('discord/callback')
   async callback(@Req() req: Request, @Res() res: Response, @Query('code') code?: string, @Query('state') state?: string) {
+    console.log('[DEBUG CALLBACK START]', {
+      incomingCookies: req.cookies,
+      hasSession: !!req.session,
+      sessionID: req.sessionID,
+      stateParam: state,
+      sessionOauthState: req.session?.oauthState,
+    });
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     if (!code) return res.redirect(`${frontendUrl}/?authError=1`);
     const isProd = process.env.NODE_ENV === 'production';
     if (!state || (isProd && req.session.oauthState && state !== req.session.oauthState)) {
+      console.warn('[DEBUG CALLBACK STATE MISMATCH OR MISSING]', {
+        stateParam: state,
+        sessionOauthState: req.session?.oauthState,
+      });
       return res.redirect(`${frontendUrl}/?authError=1`);
     }
 
@@ -49,6 +72,7 @@ export class AuthController {
       console.log('[DEBUG CALLBACK REDIRECT]', {
         setCookieHeader: res.getHeader('Set-Cookie'),
         sessionID: req.sessionID,
+        sessionUser: req.session.user,
       });
 
       return res.redirect(`${frontendUrl}/dashboard`);
@@ -61,6 +85,11 @@ export class AuthController {
   @UseGuards(SessionAuthGuard)
   @Get('me')
   me(@CurrentUser() user: unknown, @Req() req: Request) {
+    console.log('[DEBUG GET ME]', {
+      incomingCookies: req.cookies,
+      sessionID: req.sessionID,
+      hasUser: !!req.session?.user,
+    });
     return { ok: true, user, guilds: req.session.guilds || [] };
   }
 
