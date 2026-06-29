@@ -1,6 +1,7 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PermissionsBitField } from 'discord.js';
 import { DiscordBotService } from '../discord/discord-bot.service';
+import { DiscordSlowmodeService } from '../discord/discord-slowmode.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StickersService } from '../stickers/stickers.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
@@ -16,6 +17,7 @@ export class GuildsService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => StickersService))
     private readonly stickers: StickersService,
+    private readonly slowmode: DiscordSlowmodeService,
   ) {}
 
   canManage(userGuild: any): boolean {
@@ -123,6 +125,13 @@ export class GuildsService {
     if (dto.stickerEnabled !== undefined) {
       await this.stickers.setEnabled(guildId, dto.stickerEnabled);
     }
+
+    this.slowmode.updateGuildCache(guildId, {
+      slowmodeEnabled: updated.slowmodeEnabled,
+      slowmodeChannels: updated.slowmodeChannels,
+      slowmodeIntervalQuiet: updated.slowmodeIntervalQuiet,
+      slowmodeIntervalBusy: updated.slowmodeIntervalBusy,
+    });
 
     return updated;
   }

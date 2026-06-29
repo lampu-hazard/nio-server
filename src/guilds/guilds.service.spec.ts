@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, jest } from '@jest/globals';
 import { GuildsService } from './guilds.service';
 import { DiscordBotService } from '../discord/discord-bot.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { DiscordSlowmodeService } from '../discord/discord-slowmode.service';
 import { StickersService } from '../stickers/stickers.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 
@@ -10,6 +11,7 @@ describe('GuildsService', () => {
   let bot: any;
   let prisma: any;
   let stickers: any;
+  let slowmode: any;
 
   beforeEach(() => {
     bot = {
@@ -34,10 +36,15 @@ describe('GuildsService', () => {
       setEnabled: jest.fn(),
     };
 
+    slowmode = {
+      updateGuildCache: jest.fn(),
+    };
+
     service = new GuildsService(
       bot as unknown as DiscordBotService,
       prisma as unknown as PrismaService,
       stickers as unknown as StickersService,
+      slowmode as unknown as DiscordSlowmodeService,
     );
   });
 
@@ -133,6 +140,12 @@ describe('GuildsService', () => {
       });
       expect(result).toEqual(mockUpdated);
       expect(stickers.setEnabled).not.toHaveBeenCalled();
+      expect(slowmode.updateGuildCache).toHaveBeenCalledWith('guild-1', {
+        slowmodeEnabled: true,
+        slowmodeChannels: ['channel-3'],
+        slowmodeIntervalQuiet: 20,
+        slowmodeIntervalBusy: 40,
+      });
     });
 
     it('triggers stickers setEnabled if stickerEnabled is updated', async () => {
@@ -176,6 +189,12 @@ describe('GuildsService', () => {
       });
       expect(result).toEqual(mockUpdated);
       expect(stickers.setEnabled).toHaveBeenCalledWith('guild-1', true);
+      expect(slowmode.updateGuildCache).toHaveBeenCalledWith('guild-1', {
+        slowmodeEnabled: false,
+        slowmodeChannels: [],
+        slowmodeIntervalQuiet: 5,
+        slowmodeIntervalBusy: 10,
+      });
     });
   });
 });
