@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, IsArray, IsNumber } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsArray, IsInt, Min, Max } from 'class-validator';
 
 export class UpdateSettingsDto {
   @IsOptional()
@@ -19,10 +19,14 @@ export class UpdateSettingsDto {
   slowmodeChannels?: string[];
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(0)
+  @Max(21600)
   slowmodeIntervalQuiet?: number;
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(0)
+  @Max(21600)
   slowmodeIntervalBusy?: number;
 }

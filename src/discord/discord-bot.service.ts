@@ -26,6 +26,8 @@ export class DiscordBotService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    this.slowmode.setClient(this.client);
+
     const token = process.env.DISCORD_BOT_TOKEN;
     const clientId = process.env.DISCORD_CLIENT_ID;
     if (!token || !clientId) {

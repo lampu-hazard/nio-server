@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Message, TextChannel } from 'discord.js';
+import { Client, Message, TextChannel } from 'discord.js';
 import { AppLogger } from '../logger/logger.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -10,25 +10,24 @@ interface SlowmodeSettings {
   intervalBusy: number;
 }
 
-interface SlowmodeChannel {
-  id: string;
-  name?: string;
-  rateLimitPerUser: number;
-  setRateLimitPerUser(seconds: number, reason?: string): Promise<unknown>;
-}
-
 @Injectable()
 export class DiscordSlowmodeService implements OnModuleInit, OnModuleDestroy {
   private readonly settingsCache = new Map<string, SlowmodeSettings>();
   private readonly messageTimestamps = new Map<string, number[]>();
+  private readonly lastMessageTime = new Map<string, number>();
   private readonly lastUpdateTime = new Map<string, number>();
-  private readonly channelCache = new Map<string, SlowmodeChannel>();
+  private readonly startedAt = Date.now();
+  private client: Pick<Client, 'channels'> | null = null;
   private checkInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLogger,
   ) {}
+
+  setClient(client: Pick<Client, 'channels'>) {
+    this.client = client;
+  }
 
   async onModuleInit() {
     await this.loadAllSettings();
@@ -91,7 +90,7 @@ export class DiscordSlowmodeService implements OnModuleInit, OnModuleDestroy {
 
     const channelId = channel.id;
     const now = Date.now();
-    this.channelCache.set(channelId, channel);
+    this.lastMessageTime.set(channelId, now);
 
     const timestamps = [...(this.messageTimestamps.get(channelId) ?? []), now];
     const activeTimestamps = timestamps.filter((timestamp) => timestamp > now - 10000);
@@ -109,19 +108,18 @@ export class DiscordSlowmodeService implements OnModuleInit, OnModuleDestroy {
       if (!config.enabled) continue;
 
       for (const channelId of config.channels) {
-        const channel = this.channelCache.get(channelId);
+        const channel = await this.resolveChannel(channelId);
         if (!channel) continue;
 
-        const timestamps = this.messageTimestamps.get(channelId) ?? [];
-        const lastMessageTime = timestamps.at(-1) ?? 0;
-        if (lastMessageTime > 0 && now - lastMessageTime > 30000) {
+        const lastMessageTime = this.lastMessageTime.get(channelId) ?? this.startedAt;
+        if (now - lastMessageTime > 30000) {
           await this.setSlowmode(channel, config.intervalQuiet, 'Inactivity Cooldown');
         }
       }
     }
   }
 
-  private async setSlowmode(channel: SlowmodeChannel, seconds: number, reason: string) {
+  private async setSlowmode(channel: TextChannel, seconds: number, reason: string) {
     if (channel.rateLimitPerUser === seconds) return;
 
     const channelId = channel.id;
@@ -139,8 +137,15 @@ export class DiscordSlowmodeService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private asSlowmodeChannel(channel: TextChannel): SlowmodeChannel | null {
-    if (typeof channel.setRateLimitPerUser !== 'function') return null;
-    return channel as unknown as SlowmodeChannel;
+  private async resolveChannel(channelId: string): Promise<TextChannel | null> {
+    if (!this.client) return null;
+
+    const channel = this.client.channels.cache.get(channelId) ?? await this.client.channels.fetch(channelId).catch(() => null);
+    return this.asSlowmodeChannel(channel as TextChannel | null);
+  }
+
+  private asSlowmodeChannel(channel: TextChannel | null): TextChannel | null {
+    if (!channel || typeof channel.setRateLimitPerUser !== 'function') return null;
+    return channel;
   }
 }

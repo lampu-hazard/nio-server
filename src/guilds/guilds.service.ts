@@ -95,8 +95,8 @@ export class GuildsService {
       stickerEnabled: settings?.stickerEnabled || false,
       slowmodeEnabled: settings?.slowmodeEnabled || false,
       slowmodeChannels: settings?.slowmodeChannels || [],
-      slowmodeIntervalQuiet: settings?.slowmodeIntervalQuiet || 5,
-      slowmodeIntervalBusy: settings?.slowmodeIntervalBusy || 10,
+      slowmodeIntervalQuiet: settings?.slowmodeIntervalQuiet ?? 5,
+      slowmodeIntervalBusy: settings?.slowmodeIntervalBusy ?? 10,
     };
   }
 

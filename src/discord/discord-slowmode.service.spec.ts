@@ -25,6 +25,13 @@ describe('DiscordSlowmodeService', () => {
     author: { bot: false },
   }) as unknown as Message;
 
+  const makeClient = (channel: TextChannel) => ({
+    channels: {
+      cache: { get: jest.fn<(id: string) => TextChannel>(() => channel) },
+      fetch: jest.fn(),
+    },
+  });
+
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
@@ -67,10 +74,32 @@ describe('DiscordSlowmodeService', () => {
     expect(channel.setRateLimitPerUser).toHaveBeenCalledWith(10, 'Busy Chat Detected');
   });
 
-  it('resets cached channels to quiet slowmode after inactivity', async () => {
+  it('resolves configured channels from the Discord client for inactivity resets', async () => {
+    const channel = makeChannel(10);
+    const client = makeClient(channel);
+
+    service.setClient(client as any);
+    await service.onModuleInit();
+    service.updateGuildCache('guild-1', {
+      slowmodeEnabled: true,
+      slowmodeChannels: ['channel-1'],
+      slowmodeIntervalQuiet: 5,
+      slowmodeIntervalBusy: 10,
+    });
+
+    jest.advanceTimersByTime(45_000);
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(client.channels.cache.get).toHaveBeenCalledWith('channel-1');
+    expect(channel.setRateLimitPerUser).toHaveBeenCalledWith(5, 'Inactivity Cooldown');
+  });
+
+  it('resets active channels to quiet slowmode after inactivity', async () => {
     const channel = makeChannel(10);
     const message = makeMessage(channel);
+    const client = makeClient(channel);
 
+    service.setClient(client as any);
     await service.onModuleInit();
     service.updateGuildCache('guild-1', {
       slowmodeEnabled: true,

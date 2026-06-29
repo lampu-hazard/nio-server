@@ -93,6 +93,25 @@ describe('GuildsService', () => {
         slowmodeIntervalBusy: 30,
       });
     });
+
+    it('preserves stored zero-second slowmode settings', async () => {
+      prisma.guildSettings.findUnique.mockResolvedValue({
+        guildId: 'guild-1',
+        logChannelId: null,
+        stickerEnabled: false,
+        slowmodeEnabled: true,
+        slowmodeChannels: ['channel-2'],
+        slowmodeIntervalQuiet: 0,
+        slowmodeIntervalBusy: 0,
+      });
+
+      const result = await service.getSettings('guild-1');
+
+      expect(result).toMatchObject({
+        slowmodeIntervalQuiet: 0,
+        slowmodeIntervalBusy: 0,
+      });
+    });
   });
 
   describe('updateSettings', () => {
