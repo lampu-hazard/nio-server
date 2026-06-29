@@ -30,13 +30,17 @@ model Guild {
 }
 
 model GuildSettings {
-  guildId        String   @id
-  guild          Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  logChannelId   String?
-  defaultStyle   String   @default("PREMIUM")
-  stickerEnabled Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  guildId               String   @id
+  guild                 Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  logChannelId          String?
+  defaultStyle          String   @default("PREMIUM")
+  stickerEnabled        Boolean  @default(false)
+  slowmodeEnabled       Boolean  @default(false)
+  slowmodeChannels      String[] @default([])
+  slowmodeIntervalQuiet Int      @default(5)
+  slowmodeIntervalBusy  Int      @default(10)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Panel {
