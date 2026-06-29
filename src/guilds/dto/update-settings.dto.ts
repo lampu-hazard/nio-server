@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsArray, IsNumber } from 'class-validator';
 
 export class UpdateSettingsDto {
   @IsOptional()
@@ -8,4 +8,21 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsBoolean()
   stickerEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  slowmodeEnabled?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  slowmodeChannels?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  slowmodeIntervalQuiet?: number;
+
+  @IsOptional()
+  @IsNumber()
+  slowmodeIntervalBusy?: number;
 }

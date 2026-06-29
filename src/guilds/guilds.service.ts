@@ -91,6 +91,10 @@ export class GuildsService {
     return {
       logChannelId: settings?.logChannelId || null,
       stickerEnabled: settings?.stickerEnabled || false,
+      slowmodeEnabled: settings?.slowmodeEnabled || false,
+      slowmodeChannels: settings?.slowmodeChannels || [],
+      slowmodeIntervalQuiet: settings?.slowmodeIntervalQuiet || 5,
+      slowmodeIntervalBusy: settings?.slowmodeIntervalBusy || 10,
     };
   }
 
@@ -100,11 +104,19 @@ export class GuildsService {
       update: {
         logChannelId: dto.logChannelId !== undefined ? dto.logChannelId : undefined,
         stickerEnabled: dto.stickerEnabled !== undefined ? dto.stickerEnabled : undefined,
+        slowmodeEnabled: dto.slowmodeEnabled !== undefined ? dto.slowmodeEnabled : undefined,
+        slowmodeChannels: dto.slowmodeChannels !== undefined ? dto.slowmodeChannels : undefined,
+        slowmodeIntervalQuiet: dto.slowmodeIntervalQuiet !== undefined ? dto.slowmodeIntervalQuiet : undefined,
+        slowmodeIntervalBusy: dto.slowmodeIntervalBusy !== undefined ? dto.slowmodeIntervalBusy : undefined,
       },
       create: {
         guildId,
         logChannelId: dto.logChannelId || null,
         stickerEnabled: dto.stickerEnabled || false,
+        slowmodeEnabled: dto.slowmodeEnabled || false,
+        slowmodeChannels: dto.slowmodeChannels || [],
+        slowmodeIntervalQuiet: dto.slowmodeIntervalQuiet ?? 5,
+        slowmodeIntervalBusy: dto.slowmodeIntervalBusy ?? 10,
       },
     });
 
