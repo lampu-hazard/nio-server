@@ -6,7 +6,6 @@ export class SessionAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
 
-    // Diagnostic log
     console.log('[DEBUG AUTH GUARD]', {
       url: request.url,
       method: request.method,

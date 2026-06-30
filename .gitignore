@@ -24,4 +24,5 @@ lerna-debug.log*
 .tmp
 docs/**
 .docs/
+.claude/**
 .superpowers/**
